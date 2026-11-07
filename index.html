@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <title>THYNC - 発表スライド (Team Nebosuke)</title>
+     <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Noto+Sans+JP:wght@400;500;700;900&display=swap">
+     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+     <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+     <script>
+          tailwind.config = {
+               darkMode: 'class',
+               corePlugins: { preflight: false },
+          };
+     </script>
+     <style>
+          * {
+               box-sizing: border-box;
+               margin: 0;
+               padding: 0;
+          }
+
+          body {
+               margin: 0;
+               padding: 0;
+               background: #e2e8f0;
+               font-family: 'Noto Sans JP', sans-serif;
+               color: #1e3a5f;
+          }
+
+          .display-font {
+               font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif;
+          }
+
+          #slideshow-holder {
+               flex-grow: 1;
+               width: 100%;
+               padding: 0.5rem 1rem 1rem 1rem;
+               display: flex;
+               align-items: center;
+               justify-content: center;
+               min-height: 0;
+               overflow: hidden;
+          }
+
+          #nav-controls.select-none,
+          #theme-toggle.select-none {
+               user-select: none;
+               -webkit-user-select: none;
+          }
+
+          #slideshow-wrapper {
+               width: 1280px;
+               height: 720px;
+               position: relative;
+               flex-shrink: 0;
+               border-radius: 1rem;
+               box-shadow: 0 20px 40px -10px rgba(45, 95, 126, 0.15);
+               overflow: hidden;
+               background: #f7fafc;
+          }
+
+          .slide-container {
+               width: 100%;
+               height: 100%;
+               overflow: hidden;
+               position: absolute;
+               top: 0;
+               left: 0;
+               opacity: 0;
+               pointer-events: none;
+               transition: opacity 0.3s ease-in-out;
+               padding: 56px 80px;
+               box-sizing: border-box;
+               background-color: #f7fafc;
+               display: flex;
+               flex-direction: column;
+          }
+
+          .slide-container.active {
+               opacity: 1;
+               pointer-events: auto;
+          }
+
+          .kicker {
+               font-family: 'Plus Jakarta Sans', sans-serif;
+               font-size: 14px;
+               font-weight: 700;
+               letter-spacing: 0.18em;
+               text-transform: uppercase;
+               color: #3b7495;
+               margin-bottom: 12px;
+          }
+
+          .slide-heading {
+               font-size: 40px;
+               font-weight: 800;
+               line-height: 1.25;
+               color: #1e3a5f;
+               letter-spacing: -0.02em;
+          }
+
+          .sub-desc {
+               font-size: 19px;
+               color: #53748c;
+               line-height: 1.8;
+               font-weight: 500;
+          }
+
+          .thync-card {
+               background: #ffffff;
+               border-radius: 24px;
+               border: 1px solid #dcebf0;
+               box-shadow: 0 14px 30px -10px rgba(45, 95, 126, 0.08);
+               padding: 32px;
+          }
+     </style>
+</head>
+
+<body class="bg-slate-200 dark:bg-[#121820] flex flex-col h-screen transition-colors duration-300 gap-3">
+
+     <!-- ナビゲーションバー -->
+     <div id="nav-controls" class="select-none flex-shrink-0 w-full flex items-center justify-between py-2 px-8">
+          <div
+               class="inline-flex items-center h-10 bg-white dark:bg-gray-800 rounded-full px-4 py-1 gap-4 shadow-sm border border-slate-300 dark:border-gray-700">
+               <button id="prev-slide"
+                    class="flex items-center justify-center h-7 w-7 text-slate-700 dark:text-gray-200 disabled:opacity-30 disabled:cursor-not-allowed border-none bg-transparent p-0 cursor-pointer">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+               </button>
+               <span id="slide-counter"
+                    class="font-bold text-slate-800 dark:text-gray-200 tabular-nums select-none text-sm tracking-wider"></span>
+               <button id="next-slide"
+                    class="flex items-center justify-center h-7 w-7 text-slate-700 dark:text-gray-200 disabled:opacity-30 disabled:cursor-not-allowed border-none bg-transparent p-0 cursor-pointer">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
+                    </svg>
+               </button>
+          </div>
+          <span class="text-xs font-semibold text-slate-500 tracking-wider">← / → キーまたはスペースで移動</span>
+          <button id="theme-toggle"
+               class="select-none bg-white dark:bg-gray-800 p-2.5 rounded-full shadow-sm border border-slate-300 dark:border-gray-700 text-slate-700 dark:text-gray-300 cursor-pointer">
+               <svg id="theme-toggle-dark-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+               </svg>
+               <svg id="theme-toggle-light-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                         fill="none"></path>
+               </svg>
+          </button>
+     </div>
+
+     <div id="slideshow-holder">
+          <div id="slideshow-wrapper">
+
+               <!-- SLIDE 1: 表紙 -->
+               <div class="slide-container" id="slide1"
+                    style="justify-content: center; align-items: center; text-align: center;">
+                    <p class="display-font"
+                         style="font-size: 16px; font-weight: 700; letter-spacing: 0.25em; color: #3b7495; margin-bottom: 20px;">
+                         TEAM NEBOSUKE
+                    </p>
+                    <h2
+                         style="font-size: 46px; font-weight: 800; color: #1e3a5f; letter-spacing: 0.04em; margin-bottom: 20px;">
+                         不揃いな思考を、ひとつに。
+                    </h2>
+                    <h1 class="display-font"
+                         style="font-size: 120px; font-weight: 800; color: #3b7495; letter-spacing: -0.02em; line-height: 1; margin: 0 0 24px 0;">
+                         THYNC
+                    </h1>
+                    <p class="display-font"
+                         style="font-size: 18px; font-weight: 600; color: #8ba2b2; letter-spacing: 0.28em; margin-bottom: 36px;">
+                         THINK × SYNC
+                    </p>
+                    <p style="font-size: 15px; font-weight: 600; color: #a0b5c2; letter-spacing: 0.15em;">
+                         技育CAMPハッカソン
+                    </p>
+               </div>
+
+               <!-- SLIDE 2: アプリの紹介 -->
+               <div class="slide-container" id="slide2" style="justify-content: center;">
+                    <p class="kicker">OVERVIEW</p>
+                    <h2 class="slide-heading" style="margin-bottom: 36px;">
+                         THYNCとは
+                    </h2>
+                    <div style="display: flex; gap: 48px; align-items: center;">
+                         <div style="flex: 1.1;">
+                              <div class="thync-card" style="padding: 40px 36px;">
+                                   <p
+                                        style="font-size: 26px; font-weight: 800; color: #1e3a5f; line-height: 1.5; margin-bottom: 20px;">
+                                        複数人のチャット議論を、<br>
+                                        <span style="color: #3b7495;">“話すだけ”</span>でAIがリアルタイムに<br>
+                                        可視化・整理する意思決定支援Webアプリ
+                                   </p>
+                                   <div style="height: 2px; width: 60px; background: #3b7495; margin-bottom: 20px;">
+                                   </div>
+                                   <p class="sub-desc" style="font-size: 18px; line-height: 1.8;">
+                                        いつも通りのチャット形式で会話するだけで、<br>
+                                        議題に対する発案・問題提起・賛否のつながりを<br>AIが自動構造化。<br>
+                                        特別な操作を覚えることなく、<br>誰もがスムーズに合意形成へ進めます。
+                                   </p>
+                              </div>
+                         </div>
+                         <div style="flex: 0.9; display: flex; justify-content: center;">
+                              <div class="thync-card"
+                                   style="width: 100%; height: 360px; background: #edf6f9; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px;">
+                                   <div style="display: flex; align-items: center; gap: 16px;">
+                                        <div
+                                             style="background: #ffffff; border: 1px solid #c2e0ea; border-radius: 16px; padding: 16px 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.04); text-align: center;">
+                                             <i class="fa-solid fa-comments"
+                                                  style="font-size: 24px; color: #3b7495; margin-bottom: 8px; display: block;"></i>
+                                             <span
+                                                  style="font-size: 15px; font-weight: 700; color: #1e3a5f;">普通の会話</span>
+                                        </div>
+                                        <i class="fa-solid fa-arrow-right" style="font-size: 20px; color: #3b7495;"></i>
+                                        <div
+                                             style="background: #ffffff; border: 1px solid #c2e0ea; border-radius: 16px; padding: 16px 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.04); text-align: center;">
+                                             <i class="fa-solid fa-diagram-project"
+                                                  style="font-size: 24px; color: #3b7495; margin-bottom: 8px; display: block;"></i>
+                                             <span
+                                                  style="font-size: 15px; font-weight: 700; color: #1e3a5f;">リアルタイム構造化</span>
+                                        </div>
+                                   </div>
+                                   <div style="width: 80%; height: 1px; background: #d4e7ee;"></div>
+                                   <div
+                                        style="background: #ffffff; border: 1px solid #c2e0ea; border-radius: 16px; padding: 14px 28px; box-shadow: 0 4px 12px rgba(0,0,0,0.04); text-align: center;">
+                                        <span
+                                             style="font-size: 16px; font-weight: 700; color: #3b7495;">人が決めるための意思決定支援</span>
+                                   </div>
+                              </div>
+                         </div>
+                    </div>
+               </div>
+
+               <!-- SLIDE 3: 背景と課題 -->
+               <div class="slide-container" id="slide3" style="justify-content: center;">
+                    <p class="kicker">PROBLEM</p>
+                    <h2 class="slide-heading" style="margin-bottom: 36px;">
+                         意見があっても、上手にまとまらない。
+                    </h2>
+                    <div style="display: flex; gap: 48px; align-items: center;">
+                         <div style="flex: 1.1;">
+                              <div class="sub-desc" style="margin-bottom: 24px;">
+                                   <p style="margin-bottom: 14px;">様々なアイデアが飛び交う話し合い。</p>
+                                   <p style="margin-bottom: 14px;">気づけば、「何を話していたのか」すら分からなくなることも。</p>
+                                   <p>長時間議論していると、はじめの良い案が<br>後半には息をしていないという課題がありました。</p>
+                              </div>
+                              <div
+                                   style="background: #ffffff; border-left: 4px solid #3b7495; border-radius: 0 16px 16px 0; padding: 16px 20px;">
+                                   <p style="font-size: 16px; font-weight: 700; color: #1e3a5f; margin: 0;">
+                                        たくさん考えれば考えるほど、大切な「あのアイデア」を見逃してしまう…
+                                   </p>
+                              </div>
+                         </div>
+                         <div style="flex: 0.9; display: flex; justify-content: center;">
+                              <div class="thync-card"
+                                   style="width: 100%; height: 360px; background: #edf6f9; display: flex; align-items: center; justify-content: center;">
+                                   <div
+                                        style="position: relative; width: 280px; height: 260px; display: flex; align-items: center; justify-content: center;">
+                                        <div
+                                             style="position: absolute; left: 10px; width: 160px; height: 210px; background: #ffffff; border-radius: 16px; border: 1px solid #d4e7ee; transform: rotate(-10deg); box-shadow: 0 6px 16px rgba(0,0,0,0.04); padding: 16px;">
+                                             <div
+                                                  style="width: 80%; height: 6px; background: #e0eff4; border-radius: 3px; margin-bottom: 10px;">
+                                             </div>
+                                             <div
+                                                  style="width: 100%; height: 6px; background: #e0eff4; border-radius: 3px; margin-bottom: 10px;">
+                                             </div>
+                                             <div
+                                                  style="width: 60%; height: 6px; background: #e0eff4; border-radius: 3px;">
+                                             </div>
+                                        </div>
+                                        <div
+                                             style="position: absolute; width: 160px; height: 210px; background: #ffffff; border-radius: 16px; border: 1px solid #d4e7ee; box-shadow: 0 6px 16px rgba(0,0,0,0.04); padding: 16px;">
+                                             <div
+                                                  style="width: 80%; height: 6px; background: #e0eff4; border-radius: 3px; margin-bottom: 10px;">
+                                             </div>
+                                             <div
+                                                  style="width: 100%; height: 6px; background: #e0eff4; border-radius: 3px; margin-bottom: 10px;">
+                                             </div>
+                                             <div
+                                                  style="width: 60%; height: 6px; background: #e0eff4; border-radius: 3px;">
+                                             </div>
+                                        </div>
+                                        <div
+                                             style="position: absolute; right: 10px; width: 160px; height: 210px; background: #ffffff; border-radius: 16px; border: 2px solid #a3c7dc; transform: rotate(10deg); box-shadow: 0 10px 24px rgba(59,116,149,0.1); padding: 16px;">
+                                             <div
+                                                  style="width: 80%; height: 6px; background: #c2dbe8; border-radius: 3px; margin-bottom: 10px;">
+                                             </div>
+                                             <div
+                                                  style="width: 100%; height: 6px; background: #c2dbe8; border-radius: 3px; margin-bottom: 10px;">
+                                             </div>
+                                             <div
+                                                  style="width: 70%; height: 6px; background: #c2dbe8; border-radius: 3px;">
+                                             </div>
+                                        </div>
+                                   </div>
+                              </div>
+                         </div>
+                    </div>
+               </div>
+
+               <!-- SLIDE 4: コンセプトと設計思想 -->
+               <div class="slide-container" id="slide4" style="justify-content: center;">
+                    <p class="kicker">CONCEPT & PHILOSOPHY</p>
+                    <h2 class="slide-heading" style="margin-bottom: 32px;">
+                         会話しているだけで、気づいたら整理されている。
+                    </h2>
+                    <div style="display: flex; gap: 32px; width: 100%;">
+                         <div class="thync-card"
+                              style="flex: 1; padding: 36px 30px; display: flex; flex-direction: column;">
+                              <div
+                                   style="width: 48px; height: 48px; border-radius: 14px; background: #def1f7; display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+                                   <i class="fa-solid fa-comment-dots" style="font-size: 22px; color: #3b7495;"></i>
+                              </div>
+                              <h3 style="font-size: 22px; font-weight: 800; color: #1e3a5f; margin-bottom: 14px;">
+                                   普通に“会話しているだけ”
+                              </h3>
+                              <p style="font-size: 16px; color: #53748c; line-height: 1.7;">
+                                   AIに整理してもらうための特別な操作やプロンプトは一切不要。<br>いつも通りチャットをしているだけで、<br>裏で思考が自動で整理されます。
+                              </p>
+                         </div>
+                         <div class="thync-card"
+                              style="flex: 1; padding: 36px 30px; display: flex; flex-direction: column;">
+                              <div
+                                   style="width: 48px; height: 48px; border-radius: 14px; background: #def1f7; display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+                                   <i class="fa-solid fa-user-check" style="font-size: 22px; color: #3b7495;"></i>
+                              </div>
+                              <h3 style="font-size: 22px; font-weight: 800; color: #1e3a5f; margin-bottom: 14px;">
+                                   最後に決めるのは人
+                              </h3>
+                              <p style="font-size: 16px; color: #53748c; line-height: 1.7;">
+                                   AIが勝手に答えを決めるのではなく、発案・問題点・賛否の関係を可視化し、人間自身が納得して最適な判断を下す支援をします。
+                              </p>
+                         </div>
+                    </div>
+                    <div style="margin-top: 28px; text-align: center;">
+                         <p style="font-size: 17px; font-weight: 700; color: #3b7495;">
+                              ▼ この思想を形にした実際の画面（3つの部屋と動作）を動画でご覧ください
+                         </p>
+                    </div>
+               </div>
+
+               <!-- SLIDE 5: 動作デモ・動画再生スライド -->
+               <div class="slide-container" id="slide5" style="justify-content: center; align-items: center;">
+                    <div
+                         style="width: 100%; display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
+                         <div>
+                              <p class="kicker">DEMONSTRATION</p>
+                              <h2 class="slide-heading" style="margin: 0;">
+                                   実際の画面と動作の様子
+                              </h2>
+                         </div>
+                         <span
+                              style="font-size: 16px; font-weight: 700; color: #3b7495; background: #def1f7; padding: 6px 16px; border-radius: 20px;">
+                              約1分デモ動画
+                         </span>
+                    </div>
+
+                    <!-- 動画プレースホルダー枠 -->
+                    <div class="thync-card"
+                         style="width: 100%; flex-grow: 1; background: #0f172a; border-radius: 24px; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; box-shadow: 0 20px 40px rgba(15,23,42,0.2);">
+                         <div style="text-align: center; color: #ffffff; z-index: 2;">
+                              <div style="width: 80px; height: 80px; border-radius: 50%; background: rgba(59,116,149,0.8); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 16px; cursor: pointer; transition: transform 0.2s;"
+                                   onmouseover="this.style.transform='scale(1.08)'"
+                                   onmouseout="this.style.transform='scale(1)'">
+                                   <i class="fa-solid fa-play"
+                                        style="font-size: 32px; color: #ffffff; margin-left: 6px;"></i>
+                              </div>
+                              <h3 style="font-size: 24px; font-weight: 800; margin-bottom: 8px; color: #ffffff;">
+                                   DEMO VIDEO
+                              </h3>
+                              <p style="font-size: 16px; color: #94a3b8; font-weight: 500;">
+                                   Talk（会話） ➔ THYNC（思考マップ構造化） ➔ Summary（合意形成）
+                              </p>
+                         </div>
+                         <div
+                              style="position: absolute; width: 100%; height: 100%; background: radial-gradient(circle at center, rgba(59,116,149,0.2) 0%, rgba(15,23,42,0.8) 100%); pointer-events: none;">
+                         </div>
+                    </div>
+               </div>
+
+               <!-- SLIDE 6: こだわって実装した内容 -->
+               <div class="slide-container" id="slide6" style="justify-content: center;">
+                    <p class="kicker">COMMITMENT</p>
+                    <h2 class="slide-heading" style="margin-bottom: 32px;">
+                         今回こだわって実装した内容
+                    </h2>
+                    <div style="display: flex; gap: 32px; width: 100%;">
+                         <div class="thync-card" style="flex: 1; padding: 36px 30px; border-top: 4px solid #3b7495;">
+                              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                                   <span
+                                        style="background: #def1f7; color: #3b7495; font-weight: 800; font-size: 14px; padding: 4px 12px; border-radius: 20px;">POINT
+                                        01</span>
+                                   <h3 style="font-size: 22px; font-weight: 800; color: #1e3a5f; margin: 0;">
+                                        自然な会話からの階層的意図判定</h3>
+                              </div>
+                              <p style="font-size: 16px; color: #53748c; line-height: 1.7;">
+                                   チャットの自由な文脈から「新規アイデア」「既存案への課題」「課題への解決策」を破綻なく自律判定し、カード同士を自動で<br>連鎖接続。
+                              </p>
+                         </div>
+                         <div class="thync-card" style="flex: 1; padding: 36px 30px; border-top: 4px solid #3b7495;">
+                              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                                   <span
+                                        style="background: #def1f7; color: #3b7495; font-weight: 800; font-size: 14px; padding: 4px 12px; border-radius: 20px;">POINT
+                                        02</span>
+                                   <h3 style="font-size: 22px; font-weight: 800; color: #1e3a5f; margin: 0;">
+                                        客観的データによるAI品質保証</h3>
+                              </div>
+                              <p style="font-size: 16px; color: #53748c; line-height: 1.7;">
+                                   発言意図の境界基準（LABELING.md）を厳密に定義。<br>実データ30問による自動ベンチマークテスト環境を構築し、<br>正答率100%を達成してノイズを排除。
+                              </p>
+                         </div>
+                    </div>
+               </div>
+
+               <!-- SLIDE 7: 今後の展望 -->
+               <div class="slide-container" id="slide7" style="justify-content: center;">
+                    <p class="kicker">FUTURE</p>
+                    <h2 class="slide-heading" style="margin-bottom: 36px;">
+                         今後の展望（技育博やリリースに向けて）
+                    </h2>
+                    <div style="display: flex; gap: 28px; width: 100%;">
+                         <div class="thync-card"
+                              style="flex: 1; padding: 36px 28px; display: flex; flex-direction: column;">
+                              <div
+                                   style="width: 48px; height: 48px; border-radius: 14px; background: #def1f7; display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+                                   <i class="fa-solid fa-shield-halved" style="font-size: 22px; color: #3b7495;"></i>
+                              </div>
+                              <h3 style="font-size: 20px; font-weight: 800; color: #1e3a5f; margin-bottom: 12px;">
+                                   送信取り消し・安全性の担保
+                              </h3>
+                              <p style="font-size: 15px; color: #53748c; line-height: 1.7;">
+                                   多くの人に安心して使っていただくため、<br>セキュリティ・同期保護を徹底します。
+                              </p>
+                         </div>
+                         <div class="thync-card"
+                              style="flex: 1; padding: 36px 28px; display: flex; flex-direction: column;">
+                              <div
+                                   style="width: 48px; height: 48px; border-radius: 14px; background: #def1f7; display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+                                   <i class="fa-solid fa-wand-magic-sparkles"
+                                        style="font-size: 22px; color: #3b7495;"></i>
+                              </div>
+                              <h3 style="font-size: 20px; font-weight: 800; color: #1e3a5f; margin-bottom: 12px;">
+                                   「AIの気づき」機能の実装
+                              </h3>
+                              <p style="font-size: 15px; color: #53748c; line-height: 1.7;">
+                                   トーク内容からAIが独自の観点でコメントし、そのルームにいる人間が気づけない<br>視点や考えを提示する機能を<br>完成させます。
+                              </p>
+                         </div>
+                         <div class="thync-card"
+                              style="flex: 1; padding: 36px 28px; display: flex; flex-direction: column;">
+                              <div
+                                   style="width: 48px; height: 48px; border-radius: 14px; background: #def1f7; display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+                                   <i class="fa-solid fa-mobile-screen-button"
+                                        style="font-size: 22px; color: #3b7495;"></i>
+                              </div>
+                              <h3 style="font-size: 20px; font-weight: 800; color: #1e3a5f; margin-bottom: 12px;">
+                                   スマートフォン最適化
+                              </h3>
+                              <p style="font-size: 15px; color: #53748c; line-height: 1.7;">
+                                   日常的に議論へ参加できるよう、<br>モバイル画面でのUI・操作性・互換性を<br>細部まで調整していきます。
+                              </p>
+                         </div>
+                    </div>
+               </div>
+
+               <!-- SLIDE 8: クロージング -->
+               <div class="slide-container" id="slide8"
+                    style="justify-content: center; align-items: center; text-align: center;">
+                    <h2
+                         style="font-size: 40px; font-weight: 800; color: #1e3a5f; letter-spacing: 0.04em; margin-bottom: 24px;">
+                         不揃いな思考を、ひとつに。
+                    </h2>
+                    <h1 class="display-font"
+                         style="font-size: 110px; font-weight: 800; color: #3b7495; letter-spacing: -0.02em; line-height: 1; margin: 0 0 24px 0;">
+                         THYNC
+                    </h1>
+                    <p class="display-font"
+                         style="font-size: 18px; font-weight: 600; color: #8ba2b2; letter-spacing: 0.28em; margin-bottom: 32px;">
+                         TEAM NEBOSUKE
+                    </p>
+                    <div
+                         style="width: 48px; height: 3px; background: #3b7495; margin-bottom: 28px; border-radius: 2px;">
+                    </div>
+                    <p style="font-size: 20px; font-weight: 700; color: #53748c;">
+                         ご清聴ありがとうございました
+                    </p>
+               </div>
+
+          </div>
+     </div>
+
+     <script>
+          function initializeSlideshowUi() {
+               const slides = document.querySelectorAll('.slide-container');
+               const prevButton = document.getElementById('prev-slide');
+               const nextButton = document.getElementById('next-slide');
+               const slideCounter = document.getElementById('slide-counter');
+               let currentSlide = 0;
+
+               function updateUi() {
+                    slides.forEach((slide, index) => {
+                         slide.classList.toggle('active', index === currentSlide);
+                    });
+                    if (prevButton) prevButton.disabled = currentSlide === 0;
+                    if (nextButton) nextButton.disabled = currentSlide === slides.length - 1;
+                    if (slideCounter) slideCounter.textContent = `${currentSlide + 1} / ${slides.length}`;
+               }
+
+               function showNextSlide() {
+                    if (currentSlide < slides.length - 1) {
+                         currentSlide++;
+                         updateUi();
+                    }
+               }
+
+               function showPrevSlide() {
+                    if (currentSlide > 0) {
+                         currentSlide--;
+                         updateUi();
+                    }
+               }
+
+               if (nextButton) nextButton.addEventListener('click', showNextSlide);
+               if (prevButton) prevButton.addEventListener('click', showPrevSlide);
+
+               document.addEventListener('keydown', (e) => {
+                    const el = e.target;
+                    if (el.isContentEditable || el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                         return;
+                    }
+                    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
+                         showNextSlide();
+                    } else if (e.key === 'ArrowLeft') {
+                         showPrevSlide();
+                    }
+               });
+
+               const themeToggleBtn = document.getElementById('theme-toggle');
+               const darkIcon = document.getElementById('theme-toggle-dark-icon');
+               const lightIcon = document.getElementById('theme-toggle-light-icon');
+               const htmlEl = document.documentElement;
+
+               function setTheme(isDark) {
+                    htmlEl.classList.toggle('dark', isDark);
+                    if (darkIcon) darkIcon.classList.toggle('hidden', isDark);
+                    if (lightIcon) lightIcon.classList.toggle('hidden', !isDark);
+                    localStorage.setItem('color-theme', isDark ? 'dark' : 'light');
+               }
+
+               const isDarkMode = localStorage.getItem('color-theme') === 'dark' ||
+                    (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+               setTheme(isDarkMode);
+
+               if (themeToggleBtn) {
+                    themeToggleBtn.addEventListener('click', () => setTheme(!htmlEl.classList.contains('dark')));
+               }
+
+               function updateScale() {
+                    const baseWidth = 1280;
+                    const baseHeight = 720;
+                    const slideshowWrapper = document.getElementById('slideshow-wrapper');
+                    const slideshowHolder = document.getElementById('slideshow-holder');
+
+                    if (!slideshowWrapper || !slideshowHolder) return;
+
+                    const holderStyle = getComputedStyle(slideshowHolder);
+                    const paddingX = parseFloat(holderStyle.paddingLeft) + parseFloat(holderStyle.paddingRight);
+                    const paddingY = parseFloat(holderStyle.paddingTop) + parseFloat(holderStyle.paddingBottom);
+                    const availableWidth = slideshowHolder.clientWidth - paddingX;
+                    const availableHeight = slideshowHolder.clientHeight - paddingY;
+
+                    const scaleX = availableWidth / baseWidth;
+                    const scaleY = availableHeight / baseHeight;
+                    const finalScale = Math.min(scaleX, scaleY);
+
+                    slideshowWrapper.style.transform = `scale(${finalScale})`;
+                    slideshowWrapper.style.transformOrigin = 'center center';
+               }
+
+               updateUi();
+               updateScale();
+               window.addEventListener('resize', updateScale);
+          }
+
+          document.addEventListener('DOMContentLoaded', initializeSlideshowUi);
+     </script>
+</body>
+
+</html>
