@@ -1,1 +1,0 @@
-# Thync_presentation
